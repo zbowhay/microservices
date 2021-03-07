@@ -1,24 +1,46 @@
-const { randomBytes } = require('crypto');
 const express = require('express');
 const bodyParser = require('body-parser');
-const morgan = require('morgan');
+const { randomBytes } = require('crypto');
+const cors = require('cors');
+const axios = require('axios').default;
+
 const app = express();
-const port = 4000;
-const posts = {}; // in-memory database
-
-app.use(morgan('dev'));
 app.use(bodyParser.json());
+app.use(cors());
 
-app.post('/posts', (req, res) => {
-    const id = randomBytes(4).toString('hex');
-    const { title } = req.body;
-    posts[id] = { id, title };
-
-    res.status(201).send(posts[id]);
-});
+const posts = {};
 
 app.get('/posts', (req, res) => {
-    res.status(200).send(posts);
+  res.send(posts);
 });
 
-app.listen(port, () => { console.log(`POSTS server listening on port ${port}...`); });
+app.post('/posts', async (req, res) => {
+  const id = randomBytes(4).toString('hex');
+  const { title } = req.body;
+
+  posts[id] = {
+    id,
+    title
+  };
+
+  await axios.post('http://localhost:4005/events', {
+    type: 'PostCreated',
+    data: {
+        id, title
+    }
+  });
+
+  res.status(201).send(posts[id]);
+});
+
+app.post('/events', (req, res) => {
+    const body = req.body;
+    console.log(`received ${body.type} event!`);
+    
+    res.status(200).send({});
+});
+
+app.listen(4000, () => {
+  console.log('Listening on 4000');
+});
+

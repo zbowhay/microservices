@@ -1,27 +1,46 @@
-const { randomBytes } = require('crypto');
 const express = require('express');
 const bodyParser = require('body-parser');
-const morgan = require('morgan');
+const { randomBytes } = require('crypto');
+const cors = require('cors');
+const axios = require('axios').default;
+
 const app = express();
-const port = 4001;
-const commentsByPostId = { /** postId: [ { commentId, content }, ... comments]  */}; // in-memory database
-
-app.use(morgan('dev'));
 app.use(bodyParser.json());
+app.use(cors());
 
-app.post('/posts/:id/comments', (req, res) => {
-    const commentId = randomBytes(4).toString('hex');
-    const { content } = req.body;
-
-    const comments = commentsByPostId[req.params.id] || [];
-    comments.push({ id: commentId, content });
-    commentsByPostId[req.params.id] = comments;
-
-    res.status(201).send(comments);
-});
+const commentsByPostId = {};
 
 app.get('/posts/:id/comments', (req, res) => {
-    res.status(200).send(commentsByPostId[req.params.id] || []);
+  res.send(commentsByPostId[req.params.id] || []);
 });
 
-app.listen(port, () => { console.log(`POSTS server listening on port ${port}...`); });
+app.post('/posts/:id/comments', async (req, res) => {
+  const commentId = randomBytes(4).toString('hex');
+  const { content } = req.body;
+  const postId = req.params.id;
+
+  const comments = commentsByPostId[postId] || [];
+
+  comments.push({ id: commentId, content });
+
+  commentsByPostId[postId] = comments;
+
+  await axios.post('http://localhost:4005/events', {
+    type: 'CommentCreated',
+    data: { id: commentId, content, postId }
+  });
+
+  res.status(201).send(comments);
+});
+
+app.post('/events', (req, res) => {
+  const body = req.body;
+  console.log(`received ${body.type} event!`);
+  
+  res.status(200).send({});
+});
+
+app.listen(4001, () => {
+  console.log('Listening on 4001');
+});
+
