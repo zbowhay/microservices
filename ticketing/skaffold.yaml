@@ -1,0 +1,19 @@
+apiVersion: skaffold/v2beta10
+kind: Config
+deploy:
+  kubectl:
+    defaultNamespace: ingress-nginx
+    manifests:
+      - ./infra/k8s/*.yaml
+build:
+  local:
+    push: false
+  artifacts:
+    - image: zbowhay/auth
+      context: auth
+      docker:
+        dockerfile: Dockerfile
+      sync:
+        manual:
+          - src: "src/**/*.ts"
+            dest: .
