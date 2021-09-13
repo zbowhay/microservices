@@ -45,8 +45,6 @@ const start = async () => {
     try {
         await mongoose.connect('mongodb://auth-mongo-srv:27017/auth');
         console.log('Connected to MongoDB');
-
-        await User.create({ email: 'test@test.com', password: 'password' });
     } catch (err) {
         console.error('MongoDB Error!', err);
     }
