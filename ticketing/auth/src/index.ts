@@ -36,6 +36,11 @@ app.all('*', async() => { throw new NotFoundError(); });
 app.use(errorHandler);
 
 const start = async () => {
+    // environment variable confirmation
+    if (!process.env.JWT_KEY) {
+        throw new Error('Environment variable JWT_KEY is not defined!');
+    }
+
     // data layer
     try {
         await mongoose.connect('mongodb://auth-mongo-srv:27017/auth');

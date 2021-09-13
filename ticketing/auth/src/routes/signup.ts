@@ -31,7 +31,7 @@ router.post('/api/users/signup', signupValidator, async (req: Request, res: Resp
     const userJwt = jwt.sign({
         id: user.id,
         email: user.email
-    }, 'asdf');
+    }, process.env.JWT_KEY!);
 
     req.session = { ...req.session, ...{ jwt: userJwt }};
     res.status(201).send(user);
